@@ -1,12 +1,17 @@
 var _ = require('underscore');
-var expressWinston = require('express-winston');
 var winston = require('winston');
+var expressWinston = require('express-winston');
 var CloudWatchTransport = require('winston-aws-cloudwatch');
+
 
 module.exports = (function() {
   var Logger = function(params) {
     var environment = process.env['NODE_ENV'];
     params = Logger.processParams(params);
+
+    // ===========================
+    // Init transports
+    // ===========================
 
     var transports = [
       new winston.transports.Console({
@@ -38,6 +43,10 @@ module.exports = (function() {
       }));
     }
 
+    // ===========================
+    // Getters
+    // ===========================
+
     this.getTransports = function() {
       return transports;
     };
@@ -47,9 +56,13 @@ module.exports = (function() {
     };
 
     this.getWinstonInstance = _.memoize(function() {
-      return new winston.Logger({
+      var instance = new winston.Logger({
         transports: transports
       });
+
+      instance.setLevels(winston.config.syslog.levels);
+
+      return instance;
     });
   };
 
@@ -74,24 +87,30 @@ module.exports = (function() {
 
   Logger.prototype.createRequestMiddleware = function() {
     var params = this.getParams();
-    return expressWinston.logger({
-      transports: this.getTransports(),
+
+    var instance = expressWinston.logger({
+      winstonInstance: this.getWinstonInstance(),
       requestWhitelist: params.requestWhitelist,
       requestBlacklist: params.requestBlacklist,
       responseWhitelist: params.responseWhitelist,
       responseBlackList: params.responseBlackList
     });
+
+    return instance;
   };
 
   Logger.prototype.createErrorMiddleware = function() {
     var params = this.getParams();
-    return expressWinston.errorLogger({
-      transports: this.getTransports(),
+
+    var instance = expressWinston.errorLogger({
+      winstonInstance: this.getWinstonInstance(),
       requestWhitelist: params.requestWhitelist,
       requestBlacklist: params.requestBlacklist,
       responseWhitelist: params.responseWhitelist,
       responseBlackList: params.responseBlackList
     });
+
+    return instance;
   };
 
   Logger.prototype.log = function() {
