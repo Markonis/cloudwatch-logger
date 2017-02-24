@@ -1,6 +1,6 @@
 {
   "name": "@markonis/cloudwatch-logger",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Simple wrapper around Winston that sets up an opinionated logger for AWS CloudWatch",
   "main": "index.js",
   "directories": {
