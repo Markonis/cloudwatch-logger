@@ -1,29 +1,33 @@
 var expect = require('expect.js');
 var Logger = require(process.cwd() + '/index.js');
+var _ = require('underscore');
 
 describe('Logger', function() {
-  describe('processParams', function() {
-    it('sets default params', function() {
-      var input = {
-        logStreamName: 'test-log',
-        requestWhitelist: ['body']
+  describe('constructor', function() {
+    it('initializes the transports properly', function() {
+      var logger = null;
+      var params = {
+        logStreamName: 'cloudwatch-logger',
+        logGroupName: 'test-log-group',
+        fileTransport: true,
+        awsConfig: {
+          accessKeyId: 'test',
+          secretAccessKey: 'test',
+          region: 'test'
+        }
       };
 
-      var result = Logger.processParams(input);
-      expect(result).to.eql({
-        logStreamName: 'test-log',
-        logGroupName: process.env['AWS_LOG_GROUP'],
-        level: 'info',
-        requestWhitelist: ['body'],
-        requestBlacklist: [],
-        responseWhitelist: [],
-        responseBlackList: [],
-        awsConfig: {
-          accessKeyId: process.env['AWS_ACCESS_KEY_ID'],
-          secretAccessKey: process.env['AWS_SECRET_ACCESS_KEY'],
-          region: process.env['AWS_REGION']
-        }
-      });
+      logger = new Logger(_.extend(params, {
+        fileTransport: false
+      }));
+
+      expect(logger.getTransports().length).to.be(1);
+
+      logger = new Logger(_.extend(params, {
+        fileTransport: true
+      }));
+
+      expect(logger.getTransports().length).to.be(2);
     });
   });
 });
